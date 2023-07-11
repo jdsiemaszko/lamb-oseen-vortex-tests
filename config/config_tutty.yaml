@@ -1,0 +1,81 @@
+#---------------------------General Params-------------------------------------#
+
+
+case : "tutty_rk4"
+
+data_folder : 'data_tutty'
+plots_folder : 'plots_tutty'
+
+
+#--------------------------Time Params--------------------------------------#
+nTimeSteps : 1000    #number of lagrangian time-steps
+writeInterval_plots : 250
+compression_stride : 100  # number of timesteps between compressions
+
+deltaTc : 0.02      #lagrangian, convection time-step
+
+
+#---------------------------Lagrangian Params-------------------------------------#
+
+xMin : [-0.5]         #minimum x for initial blobs
+xMax : [0.5]          #maximum x for initial blobs
+yMin : [-0.5]         #minimum y for initial blobs
+yMax : [0.5]          #maximum y for initial blobs
+
+vInfx : 0.0           #freestream velocity in x direction
+vInfy : 0.0           #freestream velocity in y direction
+sigma : 0.010              #blob core radius
+overlap : 1.0         #blobs' overlap ratio
+
+nu : 0.001
+gammaC : 1.0
+
+  #Computation Params
+hardware : "gpu"
+# method : "fmm"
+method : "direct"
+
+  #Blob Control Params
+method_popControl : 'implicit'
+stepRedistribution : 1
+stepPopulationControl : 1
+gThresholdLocal : 1e-8
+gThresholdGlobal : 1e-8
+blobsRedistribute : 'all'
+
+  #Blob Diffusion Params
+method_diffusion : 'regrid_tutty'
+
+  #Time integration Params
+time_integration_method : 'rk4'
+
+  #Kernel params
+kernel : 'gauss'
+coreSize : 'fixed'
+
+  #xShift,yShift
+xShift : 0.0
+yShift : 0.0
+
+#--------------------------- Compression Params -------------------------------------#
+
+compressionFlag : False
+
+compression_method : 'gridfill'
+compression_params : {'Csigma' : 1., 'margin' : 0.25}
+
+support_method : 'radial'
+support_params : {'x0' : 0., 'y0' : 0.}
+
+compression_func_values: {'x0' : 0.01, 'y0' : 0.95, 'x1' : 2., 'y1' : 0.01}
+support_func_values : {'step' : 0.01, 'start' : 0.1, 'end' : 2.}
+
+#---------------------------Plot Params-------------------------------------#
+nPlotPoints : 100    #plot points in each direction
+xMinPlot : -2.0       #minimum x to plot
+xMaxPlot : 2.0       #maximum x to plot
+yMinPlot : -2.0       #minimum y to plot
+yMaxPlot : 2.0        #maximum y to plot
+
+run_analytical_flag : True
+plot_flag : True

@@ -121,8 +121,8 @@ timeIntegrationParams = {'method':config['time_integration_method']}
 
 kernelParams = {'kernel' : config['kernel'], 'coreSize' : config['coreSize']}
 
-avrmParams = {'useRelativeThresholds':True, 'ignoreThreshold' : 1e-12, 'adaptThreshold': 1e-10, 'Clapse' : 0.01,\
-                       'merge_flag':True, 'stepMerge':1, 'mergeThreshold':0.001}
+avrmParams = {'useRelativeThresholds':True, 'ignoreThreshold' : 1e-12, 'adaptThreshold': 1e-8, 'Clapse' : 0.01,\
+                       'merge_flag':True, 'stepMerge':1, 'mergeThreshold':0.0001}
 
 compressionParams = {'method':compression_method, 'support':support_method, 'methodParams':compression_params,\
                      'supportParams':support_params}
@@ -182,7 +182,7 @@ if run_analytical_flag:
 for timeStep in range(1,nTimeSteps+1):
     time_start = timeit.default_timer()
     blobs.evolve()
-    if compressionFlag and timeStep%compression_stride == 0:
+    if compressionFlag and (timeStep%compression_stride == 0 or timeStep == 1):
         print('----------------Performing Compression--------------')
         nbefore = blobs.numBlobs
         blobs._compress()

@@ -14,13 +14,13 @@ import re
 import csv
 import pandas
 
-case = "gridfill_avrm_rk4"
+case = "ML_avrm_rk4"
 case_dir = os.getcwd()
-data_dir = os.path.join(case_dir,'data_avrm_compression_M4_')
-plots_dir = os.path.join(case_dir,'plots_avrm_compression_M4_')
+data_dir = os.path.join(case_dir,'data_ML_4_')
+plots_dir = os.path.join(case_dir,'plots_ML_4_')
 Path(plots_dir).mkdir(parents=True, exist_ok=True)
 
-nTimeSteps = 495
+nTimeSteps = 350
 coreSize = 'variable'
 gammaC = 1.0
 deltaTc = 0.02

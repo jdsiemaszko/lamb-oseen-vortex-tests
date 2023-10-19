@@ -2,7 +2,7 @@ import numpy as np
 import timeit
 import matplotlib.pyplot as plt
 from pathlib import Path
-import blobs_solver2 as pHyFlow
+import pHyFlow
 # import pHyFlow
 # import VorticityFoamPy as foam
 import solvers.particle as particle
@@ -17,7 +17,7 @@ import pandas
 
 #---------------Current directory and paths---------------------F---------------
 arg = sys.argv
-if len(arg) > 2:
+if len(arg) > 3:
     raise Exception("More than two arguments inserted!")
 if len(arg) <= 1:
     raise Exception("No config file specificed!")
@@ -36,10 +36,11 @@ loader.add_implicit_resolver(
     |\\.(?:nan|NaN|NAN))$''', re.X),
     list(u'-+0123456789.'))
 config = yaml.load(open(os.path.join(configFile)),Loader=loader)
-
+case = config['case']
 case_dir = os.getcwd()
-data_dir = os.path.join(case_dir,config["data_folder"])
-plots_dir = os.path.join(case_dir,config["plots_folder"])
+results_dir = 'results'
+data_dir = os.path.join(case_dir,results_dir,  case, config["data_folder"])
+plots_dir = os.path.join(case_dir, results_dir, case, config["plots_folder"])
 
 Path(data_dir).mkdir(parents=True, exist_ok=True)
 Path(plots_dir).mkdir(parents=True, exist_ok=True)
@@ -47,7 +48,7 @@ Path(plots_dir).mkdir(parents=True, exist_ok=True)
 start_index = configFile.index('_') + 1
 end_index = configFile.index('.')
 # case = configFile[start_index:end_index]
-case = config['case']
+
 
 # #--------------Copy values from the config file--------------------
 
@@ -76,31 +77,22 @@ deltaTc = config["deltaTc"]
 nTimeSteps = config["nTimeSteps"]
 
 if coreSize == "fixed":
-    sigma = float(2.0*(np.sqrt(6.0*nu*deltaTc)))
+    sigma = float((np.sqrt(2.0 * 6.0*nu*deltaTc)))
     hBlob = sigma*overlap
 else :
-    sigma = np.array([2.0*(np.sqrt(6.0*nu*deltaTc))])
-    hBlob = sigma[0]*overlap
+    sigma_init = np.array([np.sqrt(2.0 * 6.0*nu*deltaTc)])
+    hBlob = sigma_init*overlap
+if len(arg) ==3:
+    compressionFlag = False if arg[2] == 'False' else True
+else:
+    compressionFlag = config['compressionFlag']
 
-compressionFlag = config['compressionFlag']
 compression_method = config["compression_method"]
 support_method = config["support_method"]
 compression_params = config["compression_params"]
 support_params = config["support_params"]
 
 compression_stride = config['compression_stride']
-def create_linear(x0, y0, x1, y1):
-    if x0 == x1:
-        raise ValueError('two reference x values cannot be the same!')
-    
-    a = (y1 - y0) / (x1 - x0)
-    b = y0 - a*x0
-    return lambda index, x, y, g, sigma: max(a*x[index].mean()+b, min(y1, y0))
-
-# compression_params['compression'] = create_linear(**config['compression_func_values'])
-
-# step, start, end = config['support_func_values'].values()
-# support_params['r'] = np.arange(start, end+step, step)
 
 #--------------------Plot parameters--------------------------------
 xplot,yplot = np.meshgrid(np.linspace(xMinPlot,xMaxPlot,nPlotPoints),np.linspace(yMinPlot,yMaxPlot,nPlotPoints))
@@ -143,10 +135,7 @@ xyBlobs = np.column_stack((xBlobFlat,yBlobFlat))
 
 initial_vorticity = analytical_solver.vorticity_initial_blobs(xyBlobs,hBlob)
 g = initial_vorticity*hBlob*hBlob
-
-# g = np.array([gammaC])
-if coreSize == 'variable':
-    sigma = np.full(len(g),hBlob)
+sigma = np.full(len(g), sigma_init)
 
 wField = (xBlobFlat, yBlobFlat, g)
 
@@ -178,7 +167,7 @@ if run_analytical_flag:
     analytical_ux, analytical_uy = analytical_solver.velocity(xyPlot)
     analytical_vorticity = analytical_solver.vorticity(xyPlot)
     np.savetxt(os.path.join(data_dir,"results_analytical_{n:06d}.csv".format(n=0)), np.c_[xplotflat,yplotflat,analytical_ux,analytical_uy,analytical_vorticity], delimiter=' ')
-
+blobs.populationControl()
 for timeStep in range(1,nTimeSteps+1):
     time_start = timeit.default_timer()
     blobs.evolve()
@@ -186,10 +175,10 @@ for timeStep in range(1,nTimeSteps+1):
         print('----------------Performing Compression--------------')
         nbefore = blobs.numBlobs
         blobs._compress()
-        blobs.populationControl()
         nafter = blobs.numBlobs
         print(f'removed {nbefore-nafter} particles')
         print(f'current number of particles: {nafter}')
+    blobs.populationControl()
     time_end = timeit.default_timer()
     print("Time to evolve in timeStep {} is {}".format(timeStep,time_end - time_start))
 
@@ -212,7 +201,7 @@ for timeStep in range(1,nTimeSteps+1):
     if timeStep%writeInterval_plots==0 :
         ux, uy = blobs.evaluateVelocity(xplotflat,yplotflat)
         omega = blobs.evaluateVorticity(xplotflat,yplotflat)
-        print(np.max(np.abs(omega)))
+        print(f'current peak vorticity: {np.max(np.abs(omega))}')
 
         np.savetxt(os.path.join(data_dir,"results_{}_{n:06d}.csv".format(case,n=timeStep)), np.c_[xplotflat,yplotflat,ux,uy,omega], delimiter=' ')
         if coreSize == 'variable':

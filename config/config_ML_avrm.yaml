@@ -61,7 +61,7 @@ yShift : 0.0
 compressionFlag : True
 
 compression_method : 'multiscale'
-compression_params : {'Csigma' : 1., 'margin' : 0.05, 'sigma_max' : 0.03, 'sigma_min' : 0.01, 'radius_check' : 1.2, 'compression' : 0.75, 'type' : 'induced', 'ignore' : True}
+compression_params : {'Csigma' : 1., 'margin' : 0.05, 'sigma_max' : 0.1, 'sigma_min' : 0.01, 'radius_check' : 1.2, 'compression' : 0.10, 'type' : 'induced', 'ignore' : True}
 
 # support_method : 'radial'
 # support_params : {'x0' : 0., 'y0' : 0.}

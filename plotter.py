@@ -2,8 +2,8 @@ import numpy as np
 import timeit
 import matplotlib.pyplot as plt
 from pathlib import Path
-import blobs_solver2 as pHyFlow
-# import pHyFlow
+# import blobs_solver2 as pHyFlow
+import pHyFlow
 # import VorticityFoamPy as foam
 import solvers.particle as particle
 
@@ -14,17 +14,46 @@ import re
 import csv
 import pandas
 
-case = "ML_avrm_rk4"
+#---------------Current directory and paths---------------------F---------------
+arg = sys.argv
+if len(arg) > 2:
+    raise Exception("Too many arguments inserted!")
+if len(arg) <= 1:
+    raise Exception("No config file specificed!")
+configFile = arg[1]
+
+#-----------------------Config the yaml file ------------------
+loader = yaml.SafeLoader
+loader.add_implicit_resolver(
+    u'tag:yaml.org,2002:float',
+    re.compile(u'''^(?:
+     [-+]?(?:[0-9][0-9_]*)\\.[0-9_]*(?:[eE][-+]?[0-9]+)?
+    |[-+]?(?:[0-9][0-9_]*)(?:[eE][-+]?[0-9]+)
+    |\\.[0-9_]+(?:[eE][-+][0-9]+)?
+    |[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+\\.[0-9_]*
+    |[-+]?\\.(?:inf|Inf|INF)
+    |\\.(?:nan|NaN|NAN))$''', re.X),
+    list(u'-+0123456789.'))
+config = yaml.load(open(os.path.join(configFile)),Loader=loader)
+
+
+case = config['case']
 case_dir = os.getcwd()
-data_dir = os.path.join(case_dir,'data_ML_4_')
-plots_dir = os.path.join(case_dir,'plots_ML_4_')
+results_dir = 'results'
+data_dir = os.path.join(case_dir,results_dir, case, config['data_folder'])
+plots_dir = os.path.join(case_dir,results_dir, case, config['plots_folder'])
 Path(plots_dir).mkdir(parents=True, exist_ok=True)
 
-nTimeSteps = 350
-coreSize = 'variable'
-gammaC = 1.0
-deltaTc = 0.02
-writeInterval_plots = 100
+# if len(arg) == 3:
+#     nTimeSteps = int(arg[2])
+# else:
+#     nTimeSteps = config['nTimeSteps']
+
+
+coreSize = config['coreSize']
+gammaC = config['gammaC']
+deltaTc = config['deltaTc']
+writeInterval_plots = config['writeInterval_plots']
 run_analytical_flag = True
 
 
@@ -35,8 +64,8 @@ t_norm = np.array([])
 #Line plots
 times_file = os.path.join(data_dir,"times_{}.csv".format(case))
 times_data = pandas.read_csv(times_file)
-
 time = times_data['Time']
+nTimeSteps = len(time)
 noBlobs = times_data['NoBlobs']
 evolution_time = times_data['Evolution_time']
 circulation = times_data['Circulation']
